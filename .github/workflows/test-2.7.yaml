@@ -45,6 +45,12 @@ jobs:
             - name: Start fdp-play environment
               run: fdp-play start --detach --blockchain-image ethereum/client-go:release-1.13 --bee-version HEAD-commit
 
+            - id: create-postage-batch
+              name: Create postage batch
+              run: |
+                  mkbatch --amount 1000000000 --depth 18
+                  sleep 120 # wait for batch to be usable
+
             - name: Write "hello world" payload
               run: |
                   curl -X POST http://localhost:1633/bytes \
