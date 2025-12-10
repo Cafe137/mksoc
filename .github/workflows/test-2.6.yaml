@@ -101,7 +101,7 @@ jobs:
 
             - name: Upload v2 SOC (bzz)
               run: |
-                  echo "${{ steps.v1-soc-bzz.outputs.mksoc_result_payload }}" | \
+                  echo "${{ steps.v2-soc-bzz.outputs.mksoc_result_payload }}" | \
                     xxd -r -p | \
                       curl -X POST http://localhost:1633/soc/${{ steps.v2-soc-bzz.outputs.mksoc_result_owner }}/${{ steps.v2-soc-bzz.outputs.mksoc_result_feed }} \
                       -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
