@@ -42,7 +42,8 @@ jobs:
               run: |
                   curl -X POST http://localhost:1633/bytes \
                     --data "hello world" \
-                    -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}"
+                    -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    --fail-with-body
 
             - id: v1-soc
               name: Generate v1 SOC
@@ -59,10 +60,13 @@ jobs:
                       curl -X POST http://localhost:1633/soc/${{ steps.v1-soc.outputs.mksoc_result_owner }}/${{ steps.v1-soc.outputs.mksoc_result_feed }} \
                       -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v1-soc.outputs.mksoc_result_signature }}" \
-                      --data-binary @-
+                      --data-binary @- \
+                      --fail-with-body
 
             - name: Verify V1 SOC
-              run: curl http://localhost:1633/feeds/${{ steps.v1-soc.outputs.mksoc_result_owner }}/${{ steps.v1-soc.outputs.mksoc_result_topic }}
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v1-soc.outputs.mksoc_result_owner }}/${{ steps.v1-soc.outputs.mksoc_result_topic }} \
+                    --fail-with-body
 
             - id: v2-soc
               name: Generate v2 SOC
@@ -79,7 +83,10 @@ jobs:
                       curl -X POST http://localhost:1633/soc/${{ steps.v2-soc.outputs.mksoc_result_owner }}/${{ steps.v2-soc.outputs.mksoc_result_feed }} \
                       -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v2-soc.outputs.mksoc_result_signature }}" \
-                      --data-binary @-
+                      --data-binary @- \
+                      --fail-with-body
 
             - name: Verify V2 SOC
-              run: curl http://localhost:1633/feeds/${{ steps.v2-soc.outputs.mksoc_result_owner }}/${{ steps.v2-soc.outputs.mksoc_result_topic }}
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v2-soc.outputs.mksoc_result_owner }}/${{ steps.v2-soc.outputs.mksoc_result_topic }} \
+                    --fail-with-body
