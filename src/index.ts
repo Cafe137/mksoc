@@ -46,14 +46,14 @@ const topic = new Identifier(
 main()
 
 async function main() {
+    const cac = await MerkleTree.root(new TextEncoder().encode(payload))
     let socCac: Chunk
     if (feedType === 'v1') {
-        const cac = await MerkleTree.root(new TextEncoder().encode(payload))
         socCac = await MerkleTree.root(
             Binary.concatBytes(Binary.numberToUint64(BigInt(Math.floor(Date.now() / 1000)), 'BE'), cac.hash())
         )
     } else {
-        socCac = await MerkleTree.root(new TextEncoder().encode(payload))
+        socCac = cac
     }
     const feed = Bytes.keccak256(Binary.concatBytes(topic.toUint8Array(), FeedIndex.fromBigInt(0n).toUint8Array()))
     const soc = makeSingleOwnerChunk(socCac, privateKey, feed)
