@@ -45,23 +45,113 @@ jobs:
             - name: Start fdp-play environment
               run: fdp-play start --detach --blockchain-image ethereum/client-go:release-1.13 --bee-version HEAD-commit
 
-            - id: create-postage-batch
+            - id: postage-batch
               name: Create postage batch
               run: |
                   mkbatch --amount 1000000000 --depth 18
                   sleep 120 # wait for batch to be usable
 
-            - name: Write "hello world" payload
+            - name: Upload hello.txt (bzz endpoint)
+              run: |
+                  curl -X POST "http://localhost:1633/bzz?name=hello.txt" \
+                    -H "content-type: text/plain" \
+                    -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    --data "hello from hello.txt" \
+                    --fail-with-body
+
+            - id: create-manifest
+              name: Generate hello.txt manifest
+              run: mkmanifest --payload "hello from hello.txt" --content-type "text/plain" --filename "hello.txt"
+
+            - id: v1-soc-bzz
+              name: Generate v1 SOC (bzz)
+              run: |
+                  mksoc \
+                    --payload "${{ steps.create-manifest.outputs.mkmanifest_result_payload }}" \
+                    --feed-type v1
+
+            - name: Upload v1 SOC (bzz)
+              run: |
+                  echo "${{ steps.v1-soc-bzz.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v1-soc-bzz.outputs.mksoc_result_owner }}/${{ steps.v1-soc-bzz.outputs.mksoc_result_feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v1-soc-bzz.outputs.mksoc_result_signature }}" \
+                      --data-binary @- \
+                      --fail-with-body
+
+            - id: v1-feed-manifest
+              name: Generate v1 feed manifest (bzz)
+              run: mkfeedmanifest \
+                  --owner "${{ steps.v1-soc-bzz.outputs.mksoc_result_owner }}" \
+                  --topic "${{ steps.v1-soc-bzz.outputs.mksoc_result_topic }}"
+
+            - name: Upload v1 feed manifest (bzz)
+              run: |
+                  curl -X POST http://localhost:1633/${{ steps.v1-soc-bzz.outputs.mksoc_result_owner }}/${{ steps.v1-soc-bzz.outputs.mksoc_result_topic }} \
+                    -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    --fail-with-body
+
+            - name: Verify v1 SOC via bzz endpoint feed manifest (bzz)
+              run: |
+                  curl http://localhost:1633/bzz/${{ steps.v1-feed-manifest.output.mkfeedmanifest_output_address }}/ \
+                    --fail-with-body
+
+            - name: Verify v1 SOC via feeds endpoint raw data (bzz)
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v1-soc-bzz.outputs.mksoc_result_owner }}/${{ steps.v1-soc-bzz.outputs.mksoc_result_topic }} \
+                    --fail-with-body
+
+            - id: v2-soc-bzz
+              name: Generate v2 SOC (bzz)
+              run: |
+                  mksoc \
+                    --payload "${{ steps.create-manifest.outputs.mkmanifest_result_payload }}" \
+                    --feed-type v2
+
+            - name: Upload v2 SOC (bzz)
+              run: |
+                  echo "${{ steps.v1-soc-bzz.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v2-soc-bzz.outputs.mksoc_result_owner }}/${{ steps.v2-soc-bzz.outputs.mksoc_result_feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v2-soc-bzz.outputs.mksoc_result_signature }}" \
+                      --data-binary @- \
+                      --fail-with-body
+
+            - id: v2-feed-manifest
+              name: Generate v2 feed manifest (bzz)
+              run: mkfeedmanifest \
+                  --owner "${{ steps.v2-soc-bzz.outputs.mksoc_result_owner }}" \
+                  --topic "${{ steps.v2-soc-bzz.outputs.mksoc_result_topic }}"
+
+            - name: Upload v2 feed manifest (bzz)
+              run: |
+                  curl -X POST http://localhost:1633/${{ steps.v2-soc-bzz.outputs.mksoc_result_owner }}/${{ steps.v2-soc-bzz.outputs.mksoc_result_topic }} \
+                    -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    --fail-with-body
+
+            - name: Verify v2 SOC via bzz endpoint feed manifest (bzz)
+              run: |
+                  curl http://localhost:1633/bzz/${{ steps.v2-feed-manifest.output.mkfeedmanifest_output_address }}/ \
+                    --fail-with-body
+
+            - name: Verify v2 SOC via feeds endpoint raw data (bzz)
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v2-soc-bzz.outputs.mksoc_result_owner }}/${{ steps.v2-soc-bzz.outputs.mksoc_result_topic }} \
+                    --fail-with-body
+
+            - name: Upload "hello world" (bytes endpoint)
               run: |
                   curl -X POST http://localhost:1633/bytes \
                     --data "hello world" \
-                    -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
                     --fail-with-body
 
             - id: v1-soc-simple
               name: Generate v1 SOC (simple payload)
               run: |
-                  node dist \
+                  mksoc \
                     --payload "hello world" \
                     --feed-type v1
 
@@ -70,7 +160,7 @@ jobs:
                   echo "${{ steps.v1-soc-simple.outputs.mksoc_result_payload }}" | \
                     xxd -r -p | \
                       curl -X POST http://localhost:1633/soc/${{ steps.v1-soc-simple.outputs.mksoc_result_owner }}/${{ steps.v1-soc-simple.outputs.mksoc_result_feed }} \
-                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v1-soc-simple.outputs.mksoc_result_signature }}" \
                       --data-binary @- \
                       --fail-with-body
@@ -83,7 +173,7 @@ jobs:
             - id: v2-soc-simple
               name: Generate v2 SOC (simple payload)
               run: |
-                  node dist \
+                  mksoc \
                     --payload "hello world" \
                     --feed-type v2
 
@@ -92,7 +182,7 @@ jobs:
                   echo "${{ steps.v2-soc-simple.outputs.mksoc_result_payload }}" | \
                     xxd -r -p | \
                       curl -X POST http://localhost:1633/soc/${{ steps.v2-soc-simple.outputs.mksoc_result_owner }}/${{ steps.v2-soc-simple.outputs.mksoc_result_feed }} \
-                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v2-soc-simple.outputs.mksoc_result_signature }}" \
                       --data-binary @- \
                       --fail-with-body
@@ -102,17 +192,17 @@ jobs:
                   curl http://localhost:1633/feeds/${{ steps.v2-soc-simple.outputs.mksoc_result_owner }}/${{ steps.v2-soc-simple.outputs.mksoc_result_topic }} \
                     --fail-with-body
 
-            - name: Write "This string is exactly 40 bytes in utf-8" payload
+            - name: Upload "This string is exactly 40 bytes in utf-8" payload (bytes endpoint)
               run: |
                   curl -X POST http://localhost:1633/bytes \
                     --data "This string is exactly 40 bytes in utf-8" \
-                    -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
                     --fail-with-body
 
             - id: v1-soc-edge
               name: Generate v1 SOC (edge-case payload)
               run: |
-                  node dist \
+                  mksoc \
                     --payload "This string is exactly 40 bytes in utf-8" \
                     --feed-type v1
 
@@ -121,7 +211,7 @@ jobs:
                   echo "${{ steps.v1-soc-edge.outputs.mksoc_result_payload }}" | \
                     xxd -r -p | \
                       curl -X POST http://localhost:1633/soc/${{ steps.v1-soc-edge.outputs.mksoc_result_owner }}/${{ steps.v1-soc-edge.outputs.mksoc_result_feed }} \
-                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v1-soc-edge.outputs.mksoc_result_signature }}" \
                       --data-binary @- \
                       --fail-with-body
@@ -134,7 +224,7 @@ jobs:
             - id: v2-soc-edge
               name: Generate v2 SOC (edge-case payload)
               run: |
-                  node dist \
+                  mksoc \
                     --payload "This string is exactly 40 bytes in utf-8" \
                     --feed-type v2
 
@@ -143,7 +233,7 @@ jobs:
                   echo "${{ steps.v2-soc-edge.outputs.mksoc_result_payload }}" | \
                     xxd -r -p | \
                       curl -X POST http://localhost:1633/soc/${{ steps.v2-soc-edge.outputs.mksoc_result_owner }}/${{ steps.v2-soc-edge.outputs.mksoc_result_feed }} \
-                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      -H "swarm-postage-batch-id: ${{ steps.postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v2-soc-edge.outputs.mksoc_result_signature }}" \
                       --data-binary @- \
                       --fail-with-body
