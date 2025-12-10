@@ -24,7 +24,7 @@ jobs:
               run: npm install
 
             - name: Install global dependencies
-              run: npm install --global @fairdatasociety/fdp-play mkbatch
+              run: npm install --global @fairdatasociety/fdp-play mkbatch mksoc mkmanifest mkfeedmanifest
 
             - name: Build project
               run: npm run build
