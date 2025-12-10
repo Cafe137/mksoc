@@ -1,7 +1,17 @@
 #!/usr/bin/env node
 
 import * as core from '@actions/core'
-import { Bytes, Identifier, MerkleTree, NULL_TOPIC, PrivateKey, Reference, Signature, Span } from '@ethersphere/bee-js'
+import {
+    Bytes,
+    FeedIndex,
+    Identifier,
+    MerkleTree,
+    NULL_TOPIC,
+    PrivateKey,
+    Reference,
+    Signature,
+    Span
+} from '@ethersphere/bee-js'
 import { Arrays, Binary, Chunk, Strings, Types } from 'cafe-utility'
 import { argv, env } from 'process'
 
@@ -46,8 +56,11 @@ async function main() {
         socCac = await MerkleTree.root(new TextEncoder().encode(payload))
     }
     const soc = makeSingleOwnerChunk(socCac, privateKey, topic)
+    const feed = Bytes.keccak256(Binary.concatBytes(topic.toUint8Array(), FeedIndex.fromBigInt(0n).toUint8Array()))
     core.setOutput('mksoc_result_signature', soc.signature.toHex())
     core.setOutput('mksoc_result_payload', soc.payload.toHex())
+    core.setOutput('mksoc_result_address', soc.address.toHex())
+    core.setOutput('mksoc_result_feed', feed.toHex())
     core.setOutput('mksoc_result_topic', topic.toHex())
     core.setOutput('mksoc_result_owner', privateKey.publicKey().address().toHex())
 }

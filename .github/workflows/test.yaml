@@ -52,6 +52,14 @@ jobs:
                     --feed-type v1 \
                     --topic 0000000000000000000000000000000000000000000000000000000000000000
 
+            - name: Upload v1 SOC
+              run: |
+                  echo "${{ steps.v1-soc.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v1-soc.outputs.mksoc_result_address }}/${{ steps.v1-soc.outputs.feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v1-soc.outputs.mksoc_result_signature }}"
+
             - name: Verify V1 SOC
               run: curl http://localhost:1633/feeds/${{ steps.v1-soc.outputs.mksoc_result_owner }}/${{ steps.v1-soc.outputs.mksoc_result_topic }}
 
@@ -62,6 +70,14 @@ jobs:
                     --payload "hello world" \
                     --feed-type v2 \
                     --topic ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+            - name: Upload v2 SOC
+              run: |
+                  echo "${{ steps.v1-soc.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v2-soc.outputs.mksoc_result_address }}/${{ steps.v2-soc.outputs.feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v2-soc.outputs.mksoc_result_signature }}"
 
             - name: Verify V2 SOC
               run: curl http://localhost:1633/feeds/${{ steps.v2-soc.outputs.mksoc_result_owner }}/${{ steps.v2-soc.outputs.mksoc_result_topic }}
