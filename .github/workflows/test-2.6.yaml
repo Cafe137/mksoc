@@ -55,7 +55,8 @@ jobs:
               run: |
                   mksoc \
                     --payload "${{ steps.create-manifest.outputs.mkmanifest_result_payload }}" \
-                    --feed-type v1
+                    --feed-type v1 \
+                    --hex-payload
 
             - name: Upload v1 SOC (bzz)
               run: |
@@ -95,7 +96,8 @@ jobs:
               run: |
                   mksoc \
                     --payload "${{ steps.create-manifest.outputs.mkmanifest_result_payload }}" \
-                    --feed-type v2
+                    --feed-type v2 \
+                    --hex-payload
 
             - name: Upload v2 SOC (bzz)
               run: |

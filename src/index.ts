@@ -42,11 +42,14 @@ const topic = new Identifier(
         byteLength: 32
     })
 )
+const isHexPayload = Arrays.getBooleanArgument(argv, 'hex-payload', env, 'MKSOC_HEX_PAYLOAD') ?? false
 
 main()
 
 async function main() {
-    const cac = await MerkleTree.root(new TextEncoder().encode(payload))
+    const cac = await MerkleTree.root(
+        isHexPayload ? Binary.hexToUint8Array(payload) : new TextEncoder().encode(payload)
+    )
     let socCac: Chunk
     if (feedType === 'v1') {
         socCac = await MerkleTree.root(
