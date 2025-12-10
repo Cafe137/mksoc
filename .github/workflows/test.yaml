@@ -56,7 +56,7 @@ jobs:
               run: |
                   echo "${{ steps.v1-soc.outputs.mksoc_result_payload }}" | \
                     xxd -r -p | \
-                      curl -X POST http://localhost:1633/soc/${{ steps.v1-soc.outputs.mksoc_result_address }}/${{ steps.v1-soc.outputs.mksoc_result_feed }} \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v1-soc.outputs.mksoc_result_owner }}/${{ steps.v1-soc.outputs.mksoc_result_feed }} \
                       -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v1-soc.outputs.mksoc_result_signature }}" \
                       --data-binary @-
@@ -76,7 +76,7 @@ jobs:
               run: |
                   echo "${{ steps.v1-soc.outputs.mksoc_result_payload }}" | \
                     xxd -r -p | \
-                      curl -X POST http://localhost:1633/soc/${{ steps.v2-soc.outputs.mksoc_result_address }}/${{ steps.v2-soc.outputs.mksoc_result_feed }} \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v2-soc.outputs.mksoc_result_owner }}/${{ steps.v2-soc.outputs.mksoc_result_feed }} \
                       -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
                       --url-query "sig=${{ steps.v2-soc.outputs.mksoc_result_signature }}" \
                       --data-binary @-
