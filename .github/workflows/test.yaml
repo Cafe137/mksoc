@@ -36,7 +36,7 @@ jobs:
               name: Create postage batch
               run: |
                   mkbatch --amount 1000000000 --depth 17
-                  sleep 60 # wait for batch to be usable
+                  sleep 120 # wait for batch to be usable
 
             - name: Write "hello world" payload
               run: |
