@@ -9,7 +9,7 @@ on:
             - '**'
 
 jobs:
-    test-2.7:
+    test-v2_7:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
