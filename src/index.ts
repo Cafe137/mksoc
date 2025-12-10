@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as core from '@actions/core'
 import { Bytes, Identifier, MerkleTree, NULL_TOPIC, PrivateKey, Reference, Signature, Span } from '@ethersphere/bee-js'
 import { Arrays, Binary, Chunk, Strings, Types } from 'cafe-utility'
