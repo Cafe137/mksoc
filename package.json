@@ -1,0 +1,24 @@
+{
+    "name": "mksoc",
+    "version": "1.0.0",
+    "bin": {
+        "mksoc": "./dist/index.js"
+    },
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "check": "tsc --noEmit"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "@ethersphere/bee-js": "^10.1.1",
+        "cafe-utility": "^33.3.2"
+    },
+    "devDependencies": {
+        "@types/node": "^24.10.2",
+        "typescript": "^5.9.3"
+    }
+}
