@@ -69,9 +69,10 @@ jobs:
 
             - id: v1-feed-manifest
               name: Generate v1 feed manifest (bzz)
-              run: mkfeedmanifest \
-                  --owner "${{ steps.v1-soc-bzz.outputs.mksoc_result_owner }}" \
-                  --topic "${{ steps.v1-soc-bzz.outputs.mksoc_result_topic }}"
+              run: |
+                  mkfeedmanifest \
+                    --owner "${{ steps.v1-soc-bzz.outputs.mksoc_result_owner }}" \
+                    --topic "${{ steps.v1-soc-bzz.outputs.mksoc_result_topic }}"
 
             - name: Upload v1 feed manifest (bzz)
               run: |
@@ -108,9 +109,10 @@ jobs:
 
             - id: v2-feed-manifest
               name: Generate v2 feed manifest (bzz)
-              run: mkfeedmanifest \
-                  --owner "${{ steps.v2-soc-bzz.outputs.mksoc_result_owner }}" \
-                  --topic "${{ steps.v2-soc-bzz.outputs.mksoc_result_topic }}"
+              run: |
+                  mkfeedmanifest \
+                    --owner "${{ steps.v2-soc-bzz.outputs.mksoc_result_owner }}" \
+                    --topic "${{ steps.v2-soc-bzz.outputs.mksoc_result_topic }}"
 
             - name: Upload v2 feed manifest (bzz)
               run: |
