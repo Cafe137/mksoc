@@ -55,8 +55,8 @@ async function main() {
     } else {
         socCac = await MerkleTree.root(new TextEncoder().encode(payload))
     }
-    const soc = makeSingleOwnerChunk(socCac, privateKey, topic)
     const feed = Bytes.keccak256(Binary.concatBytes(topic.toUint8Array(), FeedIndex.fromBigInt(0n).toUint8Array()))
+    const soc = makeSingleOwnerChunk(socCac, privateKey, feed)
     core.setOutput('mksoc_result_signature', soc.signature.toHex())
     core.setOutput('mksoc_result_payload', soc.payload.toHex())
     core.setOutput('mksoc_result_address', soc.address.toHex())
