@@ -29,6 +29,9 @@ jobs:
             - name: Build project
               run: npm run build
 
+            - name: Clone fdp-play
+              run: git clone https://github.com/fairDataSociety/fdp-play
+
             - name: Install fdp-play dependencies
               run: |
                   cd fdp-play && npm install
