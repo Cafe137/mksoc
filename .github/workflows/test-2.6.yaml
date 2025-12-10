@@ -1,0 +1,141 @@
+name: Test (Bee v2.6)
+
+on:
+    push:
+        branches:
+            - 'main'
+    pull_request:
+        branches:
+            - '**'
+
+jobs:
+    test-2.6:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 20.x
+
+            - name: Install local dependencies
+              run: npm install
+
+            - name: Install global dependencies
+              run: npm install --global @fairdatasociety/fdp-play mkbatch
+
+            - name: Build project
+              run: npm run build
+
+            - name: Start fdp-play environment
+              run: fdp-play start --detach
+
+            - id: create-postage-batch
+              name: Create postage batch
+              run: |
+                  mkbatch --amount 1000000000 --depth 18
+                  sleep 120 # wait for batch to be usable
+
+            - name: Write "hello world" payload
+              run: |
+                  curl -X POST http://localhost:1633/bytes \
+                    --data "hello world" \
+                    -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    --fail-with-body
+
+            - id: v1-soc-simple
+              name: Generate v1 SOC (simple payload)
+              run: |
+                  node dist \
+                    --payload "hello world" \
+                    --feed-type v1
+
+            - name: Upload v1 SOC (simple payload)
+              run: |
+                  echo "${{ steps.v1-soc-simple.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v1-soc-simple.outputs.mksoc_result_owner }}/${{ steps.v1-soc-simple.outputs.mksoc_result_feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v1-soc-simple.outputs.mksoc_result_signature }}" \
+                      --data-binary @- \
+                      --fail-with-body
+
+            - name: Verify v1 SOC (simple payload)
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v1-soc-simple.outputs.mksoc_result_owner }}/${{ steps.v1-soc-simple.outputs.mksoc_result_topic }} \
+                    --fail-with-body
+
+            - id: v2-soc-simple
+              name: Generate v2 SOC (simple payload)
+              run: |
+                  node dist \
+                    --payload "hello world" \
+                    --feed-type v2
+
+            - name: Upload v2 SOC (simple payload)
+              run: |
+                  echo "${{ steps.v2-soc-simple.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v2-soc-simple.outputs.mksoc_result_owner }}/${{ steps.v2-soc-simple.outputs.mksoc_result_feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v2-soc-simple.outputs.mksoc_result_signature }}" \
+                      --data-binary @- \
+                      --fail-with-body
+
+            - name: Verify v2 SOC (simple payload)
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v2-soc-simple.outputs.mksoc_result_owner }}/${{ steps.v2-soc-simple.outputs.mksoc_result_topic }} \
+                    --fail-with-body
+
+            - name: Write "This string is exactly 40 bytes in utf-8" payload
+              run: |
+                  curl -X POST http://localhost:1633/bytes \
+                    --data "This string is exactly 40 bytes in utf-8" \
+                    -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                    --fail-with-body
+
+            - id: v1-soc-edge
+              name: Generate v1 SOC (edge-case payload)
+              run: |
+                  node dist \
+                    --payload "This string is exactly 40 bytes in utf-8" \
+                    --feed-type v1
+
+            - name: Upload v1 SOC (edge-case payload)
+              run: |
+                  echo "${{ steps.v1-soc-edge.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v1-soc-edge.outputs.mksoc_result_owner }}/${{ steps.v1-soc-edge.outputs.mksoc_result_feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v1-soc-edge.outputs.mksoc_result_signature }}" \
+                      --data-binary @- \
+                      --fail-with-body
+
+            - name: Verify v1 SOC (edge-case payload)
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v1-soc-edge.outputs.mksoc_result_owner }}/${{ steps.v1-soc-edge.outputs.mksoc_result_topic }} \
+                    --fail-with-body
+
+            - id: v2-soc-edge
+              name: Generate v2 SOC (edge-case payload)
+              run: |
+                  node dist \
+                    --payload "This string is exactly 40 bytes in utf-8" \
+                    --feed-type v2
+
+            - name: Upload v2 SOC (edge-case payload)
+              run: |
+                  echo "${{ steps.v2-soc-edge.outputs.mksoc_result_payload }}" | \
+                    xxd -r -p | \
+                      curl -X POST http://localhost:1633/soc/${{ steps.v2-soc-edge.outputs.mksoc_result_owner }}/${{ steps.v2-soc-edge.outputs.mksoc_result_feed }} \
+                      -H "swarm-postage-batch-id: ${{ steps.create-postage-batch.outputs.mkbatch_result_batch_id }}" \
+                      --url-query "sig=${{ steps.v2-soc-edge.outputs.mksoc_result_signature }}" \
+                      --data-binary @- \
+                      --fail-with-body
+
+            - name: Verify v2 SOC (edge-case payload)
+              run: |
+                  curl http://localhost:1633/feeds/${{ steps.v2-soc-edge.outputs.mksoc_result_owner }}/${{ steps.v2-soc-edge.outputs.mksoc_result_topic }} \
+                    --fail-with-body
