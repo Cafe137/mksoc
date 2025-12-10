@@ -82,7 +82,7 @@ jobs:
 
             - name: Verify v1 SOC via bzz endpoint feed manifest (bzz)
               run: |
-                  curl http://localhost:1633/bzz/${{ steps.v1-feed-manifest.output.mkfeedmanifest_output_address }}/ \
+                  curl http://localhost:1633/bzz/${{ steps.v1-feed-manifest.outputs.mkfeedmanifest_output_address }}/ \
                     --fail-with-body
 
             - name: Verify v1 SOC via feeds endpoint raw data (bzz)
@@ -122,7 +122,7 @@ jobs:
 
             - name: Verify v2 SOC via bzz endpoint feed manifest (bzz)
               run: |
-                  curl http://localhost:1633/bzz/${{ steps.v2-feed-manifest.output.mkfeedmanifest_output_address }}/ \
+                  curl http://localhost:1633/bzz/${{ steps.v2-feed-manifest.outputs.mkfeedmanifest_output_address }}/ \
                     --fail-with-body
 
             - name: Verify v2 SOC via feeds endpoint raw data (bzz)
