@@ -40,7 +40,7 @@ jobs:
             - name: Build fdp-play images
               run: |
                   cd fdp-play/orchestrator
-                  npm run build:env -- --build-base-bee --bee-repository=Cafe137/inbee4.git
+                  npm run build:env -- --build-base-bee --bee-repository=ethersphere/bee.git
 
             - name: Start fdp-play environment
               run: fdp-play start --detach --blockchain-image ethereum/client-go:release-1.13 --bee-version HEAD-commit
